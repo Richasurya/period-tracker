@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Smart Women's Health Tracker</title>
+<link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<div class="app">
+
+<h1>🌸 Smart Women's Health Tracker</h1>
+
+<button id="themeToggle">🌙 Dark Mode</button>
+
+<div class="card">
+
+<label>Last Period Date</label>
+<input type="date" id="date">
+
+<label>Cycle Length</label>
+<input type="number" id="cycle" placeholder="28">
+
+<label>Mood</label>
+<select id="mood">
+<option>😊 Happy</option>
+<option>😔 Sad</option>
+<option>😡 Irritated</option>
+<option>😴 Tired</option>
+</select>
+
+<label>Symptoms</label>
+<select id="symptom">
+<option>Cramps</option>
+<option>Headache</option>
+<option>Bloating</option>
+<option>No Symptoms</option>
+</select>
+
+<button onclick="addEntry()">➕ Add Entry</button>
+<button onclick="predict()">🔮 Predict Cycle</button>
+
+</div>
+
+<div class="results">
+<h2 id="period"></h2>
+<h3 id="ovulation"></h3>
+<h3 id="fertile"></h3>
+</div>
+
+<div class="history-card">
+<h2>📊 Cycle History</h2>
+<ul id="history"></ul>
+</div>
+
+</div>
+
+<script src="script.js"></script>
+
+</body>
+</html>
