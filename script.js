@@ -77,7 +77,6 @@ function displayHistory(){
 
     let saved = JSON.parse(localStorage.getItem("cycles")) || [];
 
-    /* 🔥 SORT DATA */
     saved.sort((a, b) => new Date(a.date) - new Date(b.date));
 
     saved.forEach((item, i) => {
@@ -100,7 +99,6 @@ function deleteEntry(i){
 
     let saved = JSON.parse(localStorage.getItem("cycles")) || [];
 
-    /* 🔥 SORT BEFORE DELETE (IMPORTANT) */
     saved.sort((a, b) => new Date(a.date) - new Date(b.date));
 
     saved.splice(i, 1);
@@ -113,7 +111,7 @@ function deleteEntry(i){
 }
 
 /* =========================
-   PREDICT NEXT PERIOD
+   🔥 SMART PREDICTION (FINAL FIX)
 ========================= */
 function predict(){
 
@@ -123,10 +121,10 @@ function predict(){
         return alert("Add at least 2 entries");
     }
 
-    /* 🔥 STEP 1: SORT */
+    /* SORT DATA */
     saved.sort((a, b) => new Date(a.date) - new Date(b.date));
 
-    let diff = [];
+    let cycles = [];
 
     for(let i = 1; i < saved.length; i++){
 
@@ -135,44 +133,56 @@ function predict(){
 
         let days = (d1 - d2) / (1000 * 60 * 60 * 24);
 
-        /* Ignore invalid cycles */
-        if(days > 0 && days < 60){
-            diff.push(days);
+        /* VALID RANGE FILTER */
+        if(days > 20 && days < 45){
+            cycles.push(days);
         }
     }
 
-    if(diff.length === 0){
+    if(cycles.length === 0){
         return alert("Not enough valid data");
     }
 
-    /* 🔥 STEP 2: AVERAGE */
-    let avg = Math.round(
-        diff.reduce((a, b) => a + b, 0) / diff.length
-    );
+    /* 🔥 USE LAST 3 CYCLES */
+    let recent = cycles.slice(-3);
 
-    /* 🔥 STEP 3: LAST DATE */
+    /* 🔥 MEDIAN (BEST FOR STABILITY) */
+    recent.sort((a,b)=>a-b);
+    let median = recent[Math.floor(recent.length / 2)];
+
     let last = new Date(saved[saved.length - 1].date);
 
     let next = new Date(last);
-    next.setDate(last.getDate() + avg);
+    next.setDate(last.getDate() + Math.round(median));
 
-    period.innerText = "Next Period: " + next.toDateString();
+    /* 🔥 RANGE (REALISTIC TOUCH) */
+    let early = new Date(next);
+    early.setDate(next.getDate() - 2);
 
-    checkRegularity(diff, avg);
+    let late = new Date(next);
+    late.setDate(next.getDate() + 2);
+
+    period.innerText = `
+Next Period: ${next.toDateString()}
+Range: ${early.toDateString()} - ${late.toDateString()}
+Cycle Length: ${Math.round(median)} days
+`;
+
+    checkRegularity(cycles, median);
 }
 
 /* =========================
    REGULARITY CHECK
 ========================= */
-function checkRegularity(diff, avg){
+function checkRegularity(cycles, median){
 
-    let regular = diff.every(d => Math.abs(d - avg) <= 3);
+    let regular = cycles.every(c => Math.abs(c - median) <= 3);
 
     status.innerText = regular ? "Regular" : "Irregular";
 }
 
 /* =========================
-   CYCLE GRAPH
+   GRAPH
 ========================= */
 function updateGraph(){
 
@@ -180,7 +190,6 @@ function updateGraph(){
 
     if(saved.length < 2) return;
 
-    /* 🔥 SORT */
     saved.sort((a, b) => new Date(a.date) - new Date(b.date));
 
     let labels = [];
@@ -262,11 +271,11 @@ function askDoctor(){
 
     doctorReply.innerText = q.includes("pain")
         ? "Take rest, hydration & mild medication"
-        : "Consult a doctor for better guidance";
+        : "Consult a doctor";
 }
 
 /* =========================
-   ON LOAD
+   LOAD
 ========================= */
 window.onload = () => {
 
