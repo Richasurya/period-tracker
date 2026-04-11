@@ -111,51 +111,61 @@ function deleteEntry(i){
 }
 
 /* =========================
-   🔥 SMART PREDICTION (FINAL FIX)
+   🔥 FINAL SMART PREDICTION
 ========================= */
 function predict(){
 
-    let saved = JSON.parse(localStorage.getItem("cycles")) || [];
+    let lastDateValue = date.value;
+    let cycleInput = document.getElementById("cycleLength").value;
 
-    if(saved.length < 2){
-        return alert("Add at least 2 entries");
+    if(!lastDateValue){
+        return alert("Enter last period date");
     }
 
-    /* SORT DATA */
-    saved.sort((a, b) => new Date(a.date) - new Date(b.date));
+    let last = new Date(lastDateValue);
+    let cycleLength;
 
-    let cycles = [];
+    /* 🔥 PRIORITY 1: USER INPUT */
+    if(cycleInput && cycleInput > 0){
+        cycleLength = parseInt(cycleInput);
+    }
+    else{
+        /* 🔥 PRIORITY 2: HISTORY BASED */
+        let saved = JSON.parse(localStorage.getItem("cycles")) || [];
 
-    for(let i = 1; i < saved.length; i++){
-
-        let d1 = new Date(saved[i].date);
-        let d2 = new Date(saved[i-1].date);
-
-        let days = (d1 - d2) / (1000 * 60 * 60 * 24);
-
-        /* VALID RANGE FILTER */
-        if(days > 20 && days < 45){
-            cycles.push(days);
+        if(saved.length < 2){
+            return alert("Enter cycle length or add more data");
         }
+
+        saved.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+        let cycles = [];
+
+        for(let i = 1; i < saved.length; i++){
+            let d1 = new Date(saved[i].date);
+            let d2 = new Date(saved[i-1].date);
+
+            let days = (d1 - d2) / (1000 * 60 * 60 * 24);
+
+            if(days > 20 && days < 45){
+                cycles.push(days);
+            }
+        }
+
+        if(cycles.length === 0){
+            return alert("Not enough valid data");
+        }
+
+        /* MEDIAN */
+        cycles.sort((a,b)=>a-b);
+        cycleLength = cycles[Math.floor(cycles.length / 2)];
     }
 
-    if(cycles.length === 0){
-        return alert("Not enough valid data");
-    }
-
-    /* 🔥 USE LAST 3 CYCLES */
-    let recent = cycles.slice(-3);
-
-    /* 🔥 MEDIAN (BEST FOR STABILITY) */
-    recent.sort((a,b)=>a-b);
-    let median = recent[Math.floor(recent.length / 2)];
-
-    let last = new Date(saved[saved.length - 1].date);
-
+    /* 🔥 FINAL DATE CALCULATION */
     let next = new Date(last);
-    next.setDate(last.getDate() + Math.round(median));
+    next.setDate(last.getDate() + Math.round(cycleLength));
 
-    /* 🔥 RANGE (REALISTIC TOUCH) */
+    /* RANGE */
     let early = new Date(next);
     early.setDate(next.getDate() - 2);
 
@@ -165,19 +175,15 @@ function predict(){
     period.innerText = `
 Next Period: ${next.toDateString()}
 Range: ${early.toDateString()} - ${late.toDateString()}
-Cycle Length: ${Math.round(median)} days
+Cycle Length Used: ${Math.round(cycleLength)} days
 `;
-
-    checkRegularity(cycles, median);
 }
 
 /* =========================
    REGULARITY CHECK
 ========================= */
-function checkRegularity(cycles, median){
-
-    let regular = cycles.every(c => Math.abs(c - median) <= 3);
-
+function checkRegularity(cycles, avg){
+    let regular = cycles.every(c => Math.abs(c - avg) <= 3);
     status.innerText = regular ? "Regular" : "Irregular";
 }
 
@@ -270,7 +276,7 @@ function askDoctor(){
     let q = question.value.toLowerCase();
 
     doctorReply.innerText = q.includes("pain")
-        ? "Take rest, hydration & mild medication"
+        ? "Take rest, hydration & mild care"
         : "Consult a doctor";
 }
 
